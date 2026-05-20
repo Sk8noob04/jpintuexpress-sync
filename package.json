@@ -1,0 +1,12 @@
+{
+  "name": "jpintuexpress-sync",
+  "version": "1.0.0",
+  "description": "Sincronización automática Supabase → SharePoint Lists",
+  "main": "sync.js",
+  "scripts": {
+    "sync": "node sync.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.46.0"
+  }
+}
