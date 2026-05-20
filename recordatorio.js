@@ -59,12 +59,36 @@ function formatCurrency(val) {
   return "$" + Number(val).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function getPrioridadLabel(nombre) {
-  if (!nombre) return "";
+function getPrioridadColor(nombre) {
+  if (!nombre) return "#94a3b8";
   const n = nombre.toLowerCase();
-  if (n.includes("alta") || n.includes("urgente") || n.includes("critica")) return "🔴 " + nombre;
-  if (n.includes("media")) return "🟡 " + nombre;
-  return nombre;
+  if (n.includes("alta") || n.includes("urgente") || n.includes("critica")) return "#f87171";
+  if (n.includes("media")) return "#fbbf24";
+  return "#94a3b8";
+}
+
+function buildRows(solicitudes) {
+  if (!solicitudes || solicitudes.length === 0) {
+    return '<tr><td colspan="5" style="padding:24px;text-align:center;color:#64748b;font-size:14px;">No hay solicitudes prioritarias</td></tr>';
+  }
+  return solicitudes.map(function(r) {
+    var linkUrl = r.token_aprobacion
+      ? APP_URL + "/aprobar/" + r.token_aprobacion
+      : APP_URL + "/aprobaciones";
+    var prioColor = getPrioridadColor(r.prioridad && r.prioridad.nombre);
+    var prioLabel = (r.prioridad && r.prioridad.nombre) ? r.prioridad.nombre : "—";
+    return (
+      '<tr>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#ffffff;border-bottom:1px solid #1e293b;">' + (r.motivo || "—") + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#cbd5e1;border-bottom:1px solid #1e293b;">' + (r.solicitante && r.solicitante.nombre_completo ? r.solicitante.nombre_completo : "—") + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#ffffff;border-bottom:1px solid #1e293b;">' + formatCurrency(r.costo_estimado) + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:' + prioColor + ';border-bottom:1px solid #1e293b;">&#9679; ' + prioLabel + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;border-bottom:1px solid #1e293b;text-align:center;">' +
+          '<a href="' + linkUrl + '" style="background:#2563eb;color:#ffffff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;">Ver &rarr;</a>' +
+        '</td>' +
+      '</tr>'
+    );
+  }).join("");
 }
 
 async function main() {
@@ -76,7 +100,7 @@ async function main() {
     .eq("key", "email_aprobador")
     .single();
 
-  const toEmail = setting?.value;
+  const toEmail = setting && setting.value;
   if (!toEmail) {
     console.log("No hay email_aprobador configurado. Saliendo.");
     return;
@@ -92,47 +116,104 @@ async function main() {
   if (error) throw new Error("Supabase error: " + error.message);
 
   const total = solicitudes.length;
-  const totalValor = solicitudes.reduce((s, r) => s + (r.costo_estimado || 0), 0);
+  const totalValor = solicitudes.reduce(function(s, r) { return s + (r.costo_estimado || 0); }, 0);
 
   if (total === 0) {
     console.log("No hay solicitudes pendientes. No se envia correo.");
     return;
   }
 
-  // Última solicitud pendiente para el botón CTA
+  // Última solicitud para CTA
   const ultima = solicitudes[solicitudes.length - 1];
-  const ctaUrl = ultima?.token_aprobacion
+  const ctaUrl = ultima && ultima.token_aprobacion
     ? APP_URL + "/aprobar/" + ultima.token_aprobacion
     : APP_URL + "/aprobaciones";
 
-  const destacadas = solicitudes.filter(r => {
-    const nivel = r.prioridad?.nivel || 0;
+  // Solicitudes prioritarias (nivel > 0 y <= 2)
+  const destacadas = solicitudes.filter(function(r) {
+    var nivel = r.prioridad && r.prioridad.nivel ? r.prioridad.nivel : 0;
     return nivel <= 2 && nivel > 0;
   });
 
+  // Mostrar prioritarias si hay, sino todas
+  const tablaItems = destacadas.length > 0 ? destacadas : solicitudes;
+
   const now = new Date().toLocaleString("es-PA", { timeZone: "America/Panama", dateStyle: "full", timeStyle: "short" });
 
-  let destacadasHtml = "";
-  if (destacadas.length > 0) {
-    destacadasHtml = "<h3 style=\"color:#b45309;margin:24px 0 12px;\">⚠️ Solicitudes prioritarias</h3><table style=\"width:100%;border-collapse:collapse;font-size:14px;\"><thead><tr style=\"background:#fef3c7;text-align:left;\"><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Descripción</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Solicitante</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Valor</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Prioridad</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Acción</th></tr></thead><tbody>" +
-      destacadas.map((r, i) => {
-        const linkUrl = r.token_aprobacion
-          ? APP_URL + "/aprobar/" + r.token_aprobacion
-          : APP_URL + "/aprobaciones";
-        const linkBtn = "<a href=\"" + linkUrl + "\" style=\"background:#1d4ed8;color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;\">Ver →</a>";
-        return "<tr style=\"background:" + (i % 2 === 0 ? "#fff" : "#fffbeb") + ";\"><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.motivo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.solicitante?.nombre_completo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + formatCurrency(r.costo_estimado) + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + getPrioridadLabel(r.prioridad?.nombre) + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;text-align:center;\">" + linkBtn + "</td></tr>";
-      }).join("") +
-      "</tbody></table>";
-  }
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>' +
+'<body style="margin:0;padding:0;background:#050816;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">' +
+'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050816;padding:40px 20px;">' +
+'<tr><td align="center">' +
 
-  const html = "<div style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937;\"><div style=\"background:#1d4ed8;color:white;padding:24px 32px;border-radius:12px 12px 0 0;\"><h1 style=\"margin:0;font-size:20px;\">📋 J Pintuexpress</h1><p style=\"margin:6px 0 0;opacity:0.85;font-size:14px;\">Recordatorio de solicitudes pendientes</p></div><div style=\"background:#f8fafc;padding:24px 32px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"color:#64748b;font-size:13px;margin:0 0 20px;\">" + now + "</p><div style=\"display:flex;gap:16px;margin-bottom:24px;\"><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:32px;font-weight:700;color:#1d4ed8;\">" + total + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Solicitudes pendientes</div></div><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:24px;font-weight:700;color:#059669;\">" + formatCurrency(totalValor) + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Valor total pendiente</div></div></div>" + destacadasHtml + "<div style=\"margin-top:28px;text-align:center;\"><a href=\"" + ctaUrl + "\" style=\"background:#1d4ed8;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;\">Ver última solicitud →</a></div></div><div style=\"background:#f1f5f9;padding:12px 32px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"margin:0;font-size:12px;color:#94a3b8;text-align:center;\">J Pintuexpress — Sistema de compras</p></div></div>";
+'<table width="650" cellpadding="0" cellspacing="0" border="0" style="width:650px;max-width:650px;background:#0b1220;border:1px solid #1f2937;border-radius:20px;overflow:hidden;">' +
+
+'<!-- HEADER -->' +
+'<tr><td style="padding:32px 40px;background:linear-gradient(90deg,#1d4ed8,#2563eb);">' +
+  '<div style="font-size:28px;font-weight:bold;letter-spacing:-1px;color:#ffffff;">J Pintuexpress</div>' +
+  '<div style="margin-top:8px;font-size:15px;color:rgba(255,255,255,0.85);">Recordatorio de solicitudes pendientes</div>' +
+'</td></tr>' +
+
+'<!-- BODY -->' +
+'<tr><td style="padding:40px;">' +
+
+  '<div style="font-size:13px;color:#94a3b8;margin-bottom:28px;">' + now + '</div>' +
+
+  '<!-- STATS -->' +
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+    '<td width="48%" valign="top">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+        '<tr><td style="padding:28px;text-align:center;">' +
+          '<div style="font-size:42px;font-weight:bold;color:#ffffff;">' + total + '</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Solicitudes pendientes</div>' +
+        '</td></tr>' +
+      '</table>' +
+    '</td>' +
+    '<td width="4%"></td>' +
+    '<td width="48%" valign="top">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+        '<tr><td style="padding:28px;text-align:center;">' +
+          '<div style="font-size:32px;font-weight:bold;color:#34d399;">' + formatCurrency(totalValor) + '</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Valor total pendiente</div>' +
+        '</td></tr>' +
+      '</table>' +
+    '</td>' +
+  '</tr></table>' +
+
+  '<!-- TABLA -->' +
+  '<div style="margin-top:40px;margin-bottom:18px;font-size:22px;font-weight:bold;color:#ffffff;">&#9889; Solicitudes prioritarias</div>' +
+
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;overflow:hidden;border-radius:14px;background:#0f172a;border:1px solid #1e293b;">' +
+    '<tr style="background:#111827;">' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Descripci&oacute;n</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Solicitante</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Valor</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Prioridad</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Acci&oacute;n</th>' +
+    '</tr>' +
+    buildRows(tablaItems) +
+  '</table>' +
+
+  '<!-- CTA -->' +
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">' +
+    '<a href="' + ctaUrl + '" style="display:inline-block;margin-top:36px;background:linear-gradient(90deg,#2563eb,#3b82f6);color:#ffffff;text-decoration:none;padding:16px 34px;font-size:15px;font-weight:bold;border-radius:12px;">Ver &uacute;ltima solicitud &rarr;</a>' +
+  '</td></tr></table>' +
+
+'</td></tr>' +
+
+'<!-- FOOTER -->' +
+'<tr><td style="padding:24px 40px;border-top:1px solid #1e293b;text-align:center;">' +
+  '<div style="font-size:12px;color:#64748b;line-height:1.6;">Este es un mensaje autom&aacute;tico del sistema interno de solicitudes.<br>No respondas a este correo.</div>' +
+'</td></tr>' +
+
+'</table>' +
+'</td></tr></table></body></html>';
 
   const token = await getToken();
   await sendMail(token, toEmail, "📋 Tienes " + total + " solicitudes pendientes — J Pintuexpress", html);
   console.log("Correo enviado correctamente a " + toEmail);
 }
 
-main().catch(err => {
+main().catch(function(err) {
   console.error("Error: " + err.message);
   process.exit(1);
 });
