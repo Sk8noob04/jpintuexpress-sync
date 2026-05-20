@@ -2,9 +2,9 @@ name: Recordatorio Aprobador
 
 on:
   schedule:
-    - cron: "0 13 * * 1-5"   # 8:00 AM Panama (UTC-5), lunes a viernes
-    - cron: "0 18 * * 1-5"   # 1:00 PM Panama
-    - cron: "0 22 * * 1-5"   # 5:00 PM Panama
+    - cron: "0 13 * * 1-6"   # 8:00 AM Panama (UTC-5), lunes a viernes
+    - cron: "0 18 * * 1-6"   # 1:00 PM Panama
+    - cron: "0 22 * * 1-6"   # 5:00 PM Panama
   workflow_dispatch:
 
 jobs:
