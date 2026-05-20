@@ -73,6 +73,21 @@ function buildRows(items) {
     var solicit   = (r.solicitante && r.solicitante.nombre_completo) ? r.solicitante.nombre_completo : "—";
     var costo     = formatCurrency(r.costo_estimado || 0);
 
+    var fechaLimiteFmt = "";
+    if (r.fecha_limite) {
+      var partes = String(r.fecha_limite).split("-");
+      if (partes.length === 3) {
+        fechaLimiteFmt = partes[2] + "/" + partes[1] + "/" + partes[0];
+      }
+    }
+    var notas = r.notas_compra ? String(r.notas_compra) : "";
+    var fechaLimiteHtml = fechaLimiteFmt
+      ? '<div style="font-size:12px;color:#fbbf24;margin-top:4px;">&#128197; Fecha l&#237;mite: ' + fechaLimiteFmt + '</div>'
+      : '';
+    var notasHtml = notas
+      ? '<div style="font-size:12px;color:#94a3b8;margin-top:4px;font-style:italic;">&#128221; Notas: ' + notas + '</div>'
+      : '';
+
     return (
       '<tr>' +
       '<td bgcolor="#111827" style="background-color:#111827;padding:14px 20px;border-bottom:1px solid #1e293b;">' +
@@ -88,6 +103,8 @@ function buildRows(items) {
                 '<div style="font-size:13px;font-weight:600;color:#f1f5f9;line-height:1.4;">' + motivo + '</div>' +
                 '<div style="font-size:12px;color:#60a5fa;margin-top:3px;font-weight:500;">' + solicit + '</div>' +
                 '<div style="font-size:13px;font-weight:700;color:#ffffff;margin-top:4px;">' + costo + '</div>' +
+                fechaLimiteHtml +
+                notasHtml +
               '</td>' +
             '</tr></table>' +
           '</td>' +
@@ -117,7 +134,7 @@ async function main() {
 
   const { data: solicitudes, error } = await supabase
     .from("solicitudes")
-    .select("id, motivo, costo_estimado, created_at, token_aprobacion, prioridad:prioridades(nombre, nivel), solicitante:profiles!solicitante_id(nombre_completo)")
+    .select("id, motivo, costo_estimado, created_at, token_aprobacion, notas_compra, fecha_limite, prioridad:prioridades(nombre, nivel), solicitante:profiles!solicitante_id(nombre_completo)")
     .eq("estado", "pendiente")
     .order("created_at", { ascending: true });
 
