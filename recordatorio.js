@@ -7,6 +7,7 @@ const TENANT_ID = process.env.AZURE_TENANT_ID;
 const CLIENT_ID = process.env.AZURE_CLIENT_ID;
 const CLIENT_SECRET = process.env.AZURE_CLIENT_SECRET;
 const SENDER = "alexander.castro@soltranes.com";
+const APP_URL = "https://pagina-de-compras-para-jpintuexpres.vercel.app";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
@@ -84,7 +85,7 @@ async function main() {
 
   const { data: solicitudes, error } = await supabase
     .from("solicitudes")
-    .select("id, motivo, costo_estimado, created_at, prioridad:prioridades(nombre, nivel), solicitante:profiles!solicitante_id(nombre_completo)")
+    .select("id, motivo, costo_estimado, created_at, token_aprobacion, prioridad:prioridades(nombre, nivel), solicitante:profiles!solicitante_id(nombre_completo)")
     .eq("estado", "pendiente")
     .order("created_at", { ascending: true });
 
@@ -98,6 +99,12 @@ async function main() {
     return;
   }
 
+  // Última solicitud pendiente para el botón CTA
+  const ultima = solicitudes[solicitudes.length - 1];
+  const ctaUrl = ultima?.token_aprobacion
+    ? APP_URL + "/aprobar/" + ultima.token_aprobacion
+    : APP_URL + "/aprobaciones";
+
   const destacadas = solicitudes.filter(r => {
     const nivel = r.prioridad?.nivel || 0;
     return nivel <= 2 && nivel > 0;
@@ -107,14 +114,18 @@ async function main() {
 
   let destacadasHtml = "";
   if (destacadas.length > 0) {
-    destacadasHtml = "<h3 style=\"color:#b45309;margin:24px 0 12px;\">⚠️ Solicitudes prioritarias</h3><table style=\"width:100%;border-collapse:collapse;font-size:14px;\"><thead><tr style=\"background:#fef3c7;text-align:left;\"><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Descripción</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Solicitante</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Valor</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Prioridad</th></tr></thead><tbody>" +
-      destacadas.map((r, i) =>
-        "<tr style=\"background:" + (i % 2 === 0 ? "#fff" : "#fffbeb") + ";\"><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.motivo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.solicitante?.nombre_completo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + formatCurrency(r.costo_estimado) + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + getPrioridadLabel(r.prioridad?.nombre) + "</td></tr>"
-      ).join("") +
+    destacadasHtml = "<h3 style=\"color:#b45309;margin:24px 0 12px;\">⚠️ Solicitudes prioritarias</h3><table style=\"width:100%;border-collapse:collapse;font-size:14px;\"><thead><tr style=\"background:#fef3c7;text-align:left;\"><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Descripción</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Solicitante</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Valor</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Prioridad</th><th style=\"padding:8px 12px;border:1px solid #fde68a;\">Acción</th></tr></thead><tbody>" +
+      destacadas.map((r, i) => {
+        const linkUrl = r.token_aprobacion
+          ? APP_URL + "/aprobar/" + r.token_aprobacion
+          : APP_URL + "/aprobaciones";
+        const linkBtn = "<a href=\"" + linkUrl + "\" style=\"background:#1d4ed8;color:white;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;\">Ver →</a>";
+        return "<tr style=\"background:" + (i % 2 === 0 ? "#fff" : "#fffbeb") + ";\"><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.motivo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + (r.solicitante?.nombre_completo || "") + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + formatCurrency(r.costo_estimado) + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;\">" + getPrioridadLabel(r.prioridad?.nombre) + "</td><td style=\"padding:8px 12px;border:1px solid #fde68a;text-align:center;\">" + linkBtn + "</td></tr>";
+      }).join("") +
       "</tbody></table>";
   }
 
-  const html = "<div style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937;\"><div style=\"background:#1d4ed8;color:white;padding:24px 32px;border-radius:12px 12px 0 0;\"><h1 style=\"margin:0;font-size:20px;\">📋 J Pintuexpress</h1><p style=\"margin:6px 0 0;opacity:0.85;font-size:14px;\">Recordatorio de solicitudes pendientes</p></div><div style=\"background:#f8fafc;padding:24px 32px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"color:#64748b;font-size:13px;margin:0 0 20px;\">" + now + "</p><div style=\"display:flex;gap:16px;margin-bottom:24px;\"><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:32px;font-weight:700;color:#1d4ed8;\">" + total + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Solicitudes pendientes</div></div><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:24px;font-weight:700;color:#059669;\">" + formatCurrency(totalValor) + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Valor total pendiente</div></div></div>" + destacadasHtml + "<div style=\"margin-top:28px;text-align:center;\"><a href=\"https://pagina-de-compras-para-jpintuexpres.vercel.app/aprobaciones\" style=\"background:#1d4ed8;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;\">Ver solicitudes →</a></div></div><div style=\"background:#f1f5f9;padding:12px 32px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"margin:0;font-size:12px;color:#94a3b8;text-align:center;\">J Pintuexpress — Sistema de compras</p></div></div>";
+  const html = "<div style=\"font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;max-width:600px;margin:0 auto;color:#1f2937;\"><div style=\"background:#1d4ed8;color:white;padding:24px 32px;border-radius:12px 12px 0 0;\"><h1 style=\"margin:0;font-size:20px;\">📋 J Pintuexpress</h1><p style=\"margin:6px 0 0;opacity:0.85;font-size:14px;\">Recordatorio de solicitudes pendientes</p></div><div style=\"background:#f8fafc;padding:24px 32px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"color:#64748b;font-size:13px;margin:0 0 20px;\">" + now + "</p><div style=\"display:flex;gap:16px;margin-bottom:24px;\"><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:32px;font-weight:700;color:#1d4ed8;\">" + total + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Solicitudes pendientes</div></div><div style=\"flex:1;background:white;border:1px solid #e2e8f0;border-radius:10px;padding:16px;text-align:center;\"><div style=\"font-size:24px;font-weight:700;color:#059669;\">" + formatCurrency(totalValor) + "</div><div style=\"font-size:13px;color:#64748b;margin-top:4px;\">Valor total pendiente</div></div></div>" + destacadasHtml + "<div style=\"margin-top:28px;text-align:center;\"><a href=\"" + ctaUrl + "\" style=\"background:#1d4ed8;color:white;padding:12px 28px;border-radius:8px;text-decoration:none;font-weight:600;font-size:15px;display:inline-block;\">Ver última solicitud →</a></div></div><div style=\"background:#f1f5f9;padding:12px 32px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none;\"><p style=\"margin:0;font-size:12px;color:#94a3b8;text-align:center;\">J Pintuexpress — Sistema de compras</p></div></div>";
 
   const token = await getToken();
   await sendMail(token, toEmail, "📋 Tienes " + total + " solicitudes pendientes — J Pintuexpress", html);
