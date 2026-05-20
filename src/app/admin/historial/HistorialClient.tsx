@@ -73,6 +73,7 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
   const [tipoFiltro,  setTipo]        = useState("");
   const [fechaDesde,  setFechaDesde]  = useState("");
   const [fechaHasta,  setFechaHasta]  = useState("");
+  const [usuarioFiltro, setUsuario]   = useState("");
 
   /* ── Convertir solicitudes en eventos separados ── */
   const eventos = useMemo<Evento[]>(() => {
@@ -118,6 +119,15 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
     return list;
   }, [solicitudes]);
 
+  /* ── Usuarios únicos para el dropdown ── */
+  const usuariosUnicos = useMemo(() => {
+    const set = new Set<string>();
+    for (const ev of eventos) {
+      if (ev.actor) set.add(ev.actor);
+    }
+    return Array.from(set).sort();
+  }, [eventos]);
+
   /* ── Filtros ── */
   const resultado = useMemo(() => {
     const q     = busqueda.toLowerCase().trim();
@@ -126,6 +136,7 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
 
     return eventos.filter(ev => {
       if (tipoFiltro && ev.tipo !== tipoFiltro) return false;
+      if (usuarioFiltro && ev.actor !== usuarioFiltro) return false;
       const fecha = new Date(ev.fecha);
       if (desde && fecha < desde) return false;
       if (hasta  && fecha > hasta)  return false;
@@ -138,10 +149,10 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
         (ev.detalle ?? "").toLowerCase().includes(q)
       );
     });
-  }, [eventos, busqueda, tipoFiltro, fechaDesde, fechaHasta]);
+  }, [eventos, busqueda, tipoFiltro, usuarioFiltro, fechaDesde, fechaHasta]);
 
-  const hayFiltros = busqueda || tipoFiltro || fechaDesde || fechaHasta;
-  function limpiar() { setBusqueda(""); setTipo(""); setFechaDesde(""); setFechaHasta(""); }
+  const hayFiltros = busqueda || tipoFiltro || fechaDesde || fechaHasta || usuarioFiltro;
+  function limpiar() { setBusqueda(""); setTipo(""); setFechaDesde(""); setFechaHasta(""); setUsuario(""); }
 
   return (
     <div className="space-y-4">
@@ -180,6 +191,14 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
                        text-gray-700 dark:text-gray-300 rounded-lg text-sm focus:outline-none
                        focus:ring-2 focus:ring-blue-500 transition">
             {ACCION_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+
+          <select value={usuarioFiltro} onChange={e => setUsuario(e.target.value)}
+            className="px-3 py-2 bg-white/60 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700
+                       text-gray-700 dark:text-gray-300 rounded-lg text-sm focus:outline-none
+                       focus:ring-2 focus:ring-blue-500 transition">
+            <option value="">Todos los usuarios</option>
+            {usuariosUnicos.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
 
           <span className="text-xs text-gray-400 hidden sm:block">|</span>
@@ -252,32 +271,4 @@ export default function HistorialClient({ solicitudes }: { solicitudes: Solicitu
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {ev.linea && <span className="text-xs text-gray-400">{ev.linea}</span>}
                     {ev.prioridad && <span className="text-xs text-gray-400">{ev.prioridad}</span>}
-                    {ev.placa && <span className="text-xs text-gray-400 font-mono">{ev.placa}</span>}
-                    {ev.proveedor && <span className="text-xs text-gray-400">Prov: {ev.proveedor}</span>}
-                    {ev.detalle && (
-                      <span className="text-xs text-gray-500 dark:text-gray-400 italic">
-                        &quot;{ev.detalle}&quot;
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Fecha */}
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                    {formatDateTime(ev.fecha)}
-                  </p>
-                </div>
-
-                {/* Monto */}
-                <div className="shrink-0 text-right">
-                  <p className="text-sm font-bold text-gray-900 dark:text-gray-100">
-                    {formatCurrency(ev.costo)}
-                  </p>
-                </div>
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
+                    {ev.placa && <span className="text-xs text-gray-400 font-mon

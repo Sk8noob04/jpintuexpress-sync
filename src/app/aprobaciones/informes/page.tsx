@@ -20,7 +20,9 @@ export default async function AprobacionesInformesPage() {
   const { data: profile } = await supabase
     .from("profiles").select("nombre_completo, email, role").eq("id", user.id).single();
 
-  if (!profile || profile.role !== "aprobador") redirect("/dashboard");
+  if (!profile) redirect("/dashboard");
+  if (profile.role === "admin") redirect("/admin");
+  if (profile.role !== "aprobador") redirect("/dashboard");
 
   const { data: raw } = await supabase
     .from("solicitudes")
@@ -328,11 +330,4 @@ export default async function AprobacionesInformesPage() {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </section>
-        )}
-
-      </main>
-    </div>
-  );
-}
+    

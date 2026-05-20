@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import BackButton from "@/components/BackButton";
 import TelefonoAprobadorForm from "./TelefonoAprobadorForm";
-import { actualizarTelefonoAprobador } from "./actions";
+import EmailAprobadorForm from "./EmailAprobadorForm";
+import { actualizarTelefonoAprobador, actualizarEmailAprobador } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -22,11 +23,23 @@ export default async function ConfiguracionPage() {
   if (!profile || profile.role !== "admin") redirect("/dashboard");
 
   const adminClient = createAdminClient();
-  const { data: aprobadores } = await adminClient
-    .from("profiles")
-    .select("id, nombre_completo, email, telefono")
-    .eq("role", "aprobador")
-    .order("nombre_completo");
+  const [
+    { data: aprobadores },
+    { data: emailSetting },
+  ] = await Promise.all([
+    adminClient
+      .from("profiles")
+      .select("id, nombre_completo, email, telefono")
+      .eq("role", "aprobador")
+      .order("nombre_completo"),
+    adminClient
+      .from("app_settings")
+      .select("value")
+      .eq("key", "email_aprobador")
+      .single(),
+  ]);
+
+  const emailAprobador = (emailSetting as any)?.value ?? "alexander.castro@soltranes.com";
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -61,17 +74,9 @@ export default async function ConfiguracionPage() {
           />
         </div>
 
-        {/* Sección: Solicitantes */}
-        <div className="glass-card p-4 text-sm text-blue-800 dark:text-blue-300 border-l-4 border-l-blue-500 dark:border-l-blue-400">
-          <p className="font-semibold mb-1">📩 Notificaciones al solicitante</p>
-          <p>
-            Cuando una solicitud es aprobada o rechazada, el sistema envía WA automáticamente
-            al número configurado en el perfil de cada empleado.
-            Puedes editarlos en{" "}
-            <a href="/admin/usuarios" className="underline font-medium">Admin → Usuarios</a>.
-          </p>
-        </div>
-      </main>
-    </div>
-  );
-}
+        {/* Sección: Email recordatorio */}
+        <div className="mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-xl">📧</span>
+            <div>
+              <h2 className="font-semibold text-gray-900 dark:

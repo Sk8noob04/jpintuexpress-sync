@@ -20,7 +20,9 @@ export default async function AprobacionesPage({ searchParams }: Props) {
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "aprobador") redirect("/dashboard");
+  if (!profile) redirect("/dashboard");
+  if (profile.role === "admin") redirect("/admin");
+  if (profile.role !== "aprobador") redirect("/dashboard");
 
   const { success, error } = await searchParams;
 
@@ -51,10 +53,4 @@ export default async function AprobacionesPage({ searchParams }: Props) {
         </div>
         <AprobacionesClient
           solicitudes={(todas as any[]) ?? []}
-          success={success}
-          error={error}
-        />
-      </main>
-    </div>
-  );
-}
+          succe

@@ -55,26 +55,38 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       {/* ── Right panel — form ────────────────────────────────────── */}
       <div className="flex-1 flex items-center justify-center
-                      bg-[#F2F2F7] dark:bg-gray-950
+                      bg-gradient-to-b from-slate-100 to-[#F2F2F7] dark:from-gray-900 dark:to-gray-950
                       sm:bg-gradient-to-br sm:from-slate-200 sm:via-slate-100 sm:to-slate-200
                       dark:sm:from-gray-950 dark:sm:via-slate-900 dark:sm:to-gray-950
-                      px-4 py-8">
+                      px-5 py-10 sm:py-8 sm:px-4">
         <div className="w-full max-w-sm">
 
-          {/* Mobile: logo + title (hidden on desktop since left panel covers it) */}
+          {/* Mobile: premium logo header */}
           <div className="sm:hidden text-center mb-8">
-            <div className="flex justify-center mb-3">
-              <Image
-                src="/logo.png"
-                alt="J Pintuexpress S.A."
-                width={100}
-                height={100}
-                className="object-contain drop-shadow-sm"
-                priority
-              />
+            {/* Logo with subtle glow ring */}
+            <div className="flex justify-center mb-4">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-full bg-blue-500/15 blur-xl scale-150 pointer-events-none" />
+                <div className="relative w-24 h-24 rounded-2xl bg-white dark:bg-gray-800 shadow-[0_4px_20px_rgba(0,0,0,0.12)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.4)] flex items-center justify-center p-2">
+                  <Image
+                    src="/logo.png"
+                    alt="J Pintuexpress S.A."
+                    width={80}
+                    height={80}
+                    className="object-contain"
+                    priority
+                  />
+                </div>
+              </div>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">J Pintuexpress S.A.</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Sistema de Solicitudes de Compra</p>
+            <h1 className="text-2xl font-black text-gray-900 dark:text-gray-100 tracking-tight">J Pintuexpress S.A.</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 font-medium">Sistema de Solicitudes de Compra</p>
+            {/* Subtle divider */}
+            <div className="mt-5 flex items-center gap-3">
+              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+              <span className="text-xs text-gray-400 dark:text-gray-600 font-medium uppercase tracking-wider">Acceso</span>
+              <div className="flex-1 h-px bg-gray-200 dark:bg-gray-700" />
+            </div>
           </div>
 
           {/* Desktop heading */}
@@ -110,30 +122,4 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Contraseña
-                  </label>
-                  <a href="/olvide-password" className="text-xs text-blue-600 dark:text-blue-400 hover:underline">
-                    Olvidé mi contraseña
-                  </a>
-                </div>
-                <input
-                  id="password" name="password" type="password"
-                  autoComplete="current-password" required
-                  placeholder="••••••••"
-                  className="glass-input w-full px-3.5 py-2.5 text-sm rounded-xl"
-                />
-              </div>
-
-              <LoginButton />
-            </form>
-          </div>
-
-          <p className="sm:hidden text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
-            Acceso restringido — solo personal autorizado
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
+                  <label htmlFor="password" className="block text-sm fo

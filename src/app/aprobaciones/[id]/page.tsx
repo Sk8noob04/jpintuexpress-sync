@@ -31,7 +31,9 @@ export default async function AprobacionDetailPage({ params, searchParams }: Pro
     .eq("id", user.id)
     .single();
 
-  if (!profile || profile.role !== "aprobador") redirect("/dashboard");
+  if (!profile) redirect("/dashboard");
+  if (profile.role === "admin") redirect("/admin");
+  if (profile.role !== "aprobador") redirect("/dashboard");
 
   const { data: s } = await supabase
     .from("solicitudes")
@@ -160,10 +162,4 @@ export default async function AprobacionDetailPage({ params, searchParams }: Pro
         </div>
 
         {isPendiente
-          ? <AprobacionActions id={sol.id} />
-          : <div className="h-4" />
-        }
-      </main>
-    </div>
-  );
-}
+          ? <AprobacionActions id={sol.id} /
