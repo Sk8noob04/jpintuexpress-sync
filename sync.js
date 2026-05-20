@@ -5,7 +5,6 @@
 
 const { createClient } = require("@supabase/supabase-js");
 
-// ── Configuración ────────────────────────────────────────────
 const SUPABASE_URL      = process.env.SUPABASE_URL;
 const SUPABASE_KEY      = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TENANT_ID         = process.env.AZURE_TENANT_ID;
@@ -15,7 +14,8 @@ const SHAREPOINT_URL    = process.env.SHAREPOINT_SITE_URL;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Tablas a sincronizar ─────────────────────────────────────
+// Nota: SharePoint reserva "id" como campo interno.
+// Usamos "sb_id" para almacenar el UUID de Supabase.
 const TABLES = [
   {
     tableName: "solicitudes",
@@ -23,7 +23,7 @@ const TABLES = [
     titleField: "motivo",
     select: "id, motivo, costo_estimado, estado, comentario_aprobador, imagen_url, placa, token_aprobacion, created_at, updated_at, linea:lineas(nombre), activo:activos(nombre), solicitante:profiles!solicitante_id(nombre_completo), aprobador:profiles!aprobador_id(nombre_completo)",
     flatten: (r) => ({
-      id:                    r.id,
+      sb_id:                 r.id,
       motivo:                r.motivo,
       costo_estimado:        r.costo_estimado,
       estado:                r.estado,
@@ -34,24 +34,24 @@ const TABLES = [
       comentario_aprobador:  r.comentario_aprobador || "",
       imagen_url:            r.imagen_url || "",
       placa:                 r.placa || "",
-      token_aprobacion:      r.token_aprobacion || "",
+      token_aprob:           r.token_aprobacion || "",
       created_at:            r.created_at,
       updated_at:            r.updated_at,
     }),
     columns: [
-      { name: "id",                   display: "ID",                   type: "text" },
-      { name: "costo_estimado",       display: "Costo Estimado",       type: "number" },
-      { name: "estado",               display: "Estado",               type: "text" },
-      { name: "linea",                display: "Linea",                type: "text" },
-      { name: "activo",               display: "Activo",               type: "text" },
-      { name: "solicitante",          display: "Solicitante",          type: "text" },
-      { name: "aprobador",            display: "Aprobador",            type: "text" },
-      { name: "comentario_aprobador", display: "Comentario Aprobador", type: "text" },
-      { name: "imagen_url",           display: "Imagen URL",           type: "text" },
-      { name: "placa",                display: "Placa",                type: "text" },
-      { name: "token_aprobacion",     display: "Token Aprobacion",     type: "text" },
-      { name: "created_at",           display: "Fecha Creacion",       type: "text" },
-      { name: "updated_at",           display: "Ultima Actualizacion", type: "text" },
+      { name: "sb_id",               display: "ID Supabase",          type: "text" },
+      { name: "costo_estimado",      display: "Costo Estimado",       type: "number" },
+      { name: "estado",              display: "Estado",               type: "text" },
+      { name: "linea",               display: "Linea",                type: "text" },
+      { name: "activo",              display: "Activo",               type: "text" },
+      { name: "solicitante",         display: "Solicitante",          type: "text" },
+      { name: "aprobador",           display: "Aprobador",            type: "text" },
+      { name: "comentario_aprobador",display: "Comentario Aprobador", type: "text" },
+      { name: "imagen_url",          display: "Imagen URL",           type: "text" },
+      { name: "placa",               display: "Placa",                type: "text" },
+      { name: "token_aprob",         display: "Token Aprobacion",     type: "text" },
+      { name: "created_at",          display: "Fecha Creacion",       type: "text" },
+      { name: "updated_at",          display: "Ultima Actualizacion", type: "text" },
     ],
   },
   {
@@ -60,23 +60,23 @@ const TABLES = [
     titleField: "nombre_completo",
     select: "id, nombre_completo, email, role, telefono, debe_cambiar_password, created_at, updated_at",
     flatten: (r) => ({
-      id:                   r.id,
+      sb_id:                r.id,
       nombre_completo:      r.nombre_completo,
       email:                r.email,
       role:                 r.role,
       telefono:             r.telefono || "",
-      debe_cambiar_password: r.debe_cambiar_password ? "Si" : "No",
+      debe_cambiar_pw:      r.debe_cambiar_password ? "Si" : "No",
       created_at:           r.created_at,
       updated_at:           r.updated_at,
     }),
     columns: [
-      { name: "id",                    display: "ID",                      type: "text" },
-      { name: "email",                 display: "Email",                   type: "text" },
-      { name: "role",                  display: "Rol",                     type: "text" },
-      { name: "telefono",              display: "Telefono",                type: "text" },
-      { name: "debe_cambiar_password", display: "Debe Cambiar Contrasena", type: "text" },
-      { name: "created_at",            display: "Fecha Creacion",          type: "text" },
-      { name: "updated_at",            display: "Ultima Actualizacion",    type: "text" },
+      { name: "sb_id",          display: "ID Supabase",          type: "text" },
+      { name: "email",          display: "Email",                type: "text" },
+      { name: "role",           display: "Rol",                  type: "text" },
+      { name: "telefono",       display: "Telefono",             type: "text" },
+      { name: "debe_cambiar_pw",display: "Debe Cambiar Password",type: "text" },
+      { name: "created_at",     display: "Fecha Creacion",       type: "text" },
+      { name: "updated_at",     display: "Ultima Actualizacion", type: "text" },
     ],
   },
   {
@@ -85,15 +85,15 @@ const TABLES = [
     titleField: "nombre",
     select: "id, nombre, activa, created_at",
     flatten: (r) => ({
-      id:         r.id,
+      sb_id:      r.id,
       nombre:     r.nombre,
       activa:     r.activa ? "Si" : "No",
       created_at: r.created_at,
     }),
     columns: [
-      { name: "id",         display: "ID",             type: "text" },
-      { name: "activa",     display: "Activa",         type: "text" },
-      { name: "created_at", display: "Fecha Creacion", type: "text" },
+      { name: "sb_id",      display: "ID Supabase",  type: "text" },
+      { name: "activa",     display: "Activa",       type: "text" },
+      { name: "created_at", display: "Fecha Creacion",type: "text" },
     ],
   },
   {
@@ -102,17 +102,17 @@ const TABLES = [
     titleField: "nombre",
     select: "id, nombre, activo, created_at, linea:lineas(nombre)",
     flatten: (r) => ({
-      id:         r.id,
+      sb_id:      r.id,
       nombre:     r.nombre,
       linea:      r.linea ? r.linea.nombre : "",
       activo:     r.activo ? "Si" : "No",
       created_at: r.created_at,
     }),
     columns: [
-      { name: "id",         display: "ID",             type: "text" },
-      { name: "linea",      display: "Linea",          type: "text" },
-      { name: "activo",     display: "Activo",         type: "text" },
-      { name: "created_at", display: "Fecha Creacion", type: "text" },
+      { name: "sb_id",      display: "ID Supabase",  type: "text" },
+      { name: "linea",      display: "Linea",        type: "text" },
+      { name: "activo",     display: "Activo",       type: "text" },
+      { name: "created_at", display: "Fecha Creacion",type: "text" },
     ],
   },
   {
@@ -121,7 +121,7 @@ const TABLES = [
     titleField: "accion",
     select: "id, accion, detalles, created_at, admin:profiles!admin_id(nombre_completo), usuario:profiles!usuario_id(nombre_completo)",
     flatten: (r) => ({
-      id:         r.id,
+      sb_id:      r.id,
       accion:     r.accion,
       admin:      r.admin ? r.admin.nombre_completo : "",
       usuario:    r.usuario ? r.usuario.nombre_completo : "",
@@ -129,11 +129,11 @@ const TABLES = [
       created_at: r.created_at,
     }),
     columns: [
-      { name: "id",         display: "ID",            type: "text" },
-      { name: "admin",      display: "Administrador", type: "text" },
-      { name: "usuario",    display: "Usuario",       type: "text" },
-      { name: "detalles",   display: "Detalles",      type: "text" },
-      { name: "created_at", display: "Fecha",         type: "text" },
+      { name: "sb_id",      display: "ID Supabase",  type: "text" },
+      { name: "admin",      display: "Administrador",type: "text" },
+      { name: "usuario",    display: "Usuario",      type: "text" },
+      { name: "detalles",   display: "Detalles",     type: "text" },
+      { name: "created_at", display: "Fecha",        type: "text" },
     ],
   },
 ];
@@ -201,23 +201,21 @@ async function getOrCreateList(token, siteId, displayName) {
 
 async function ensureColumns(token, siteId, listId, columns) {
   const existing = await graph(token, "GET", "/sites/" + siteId + "/lists/" + listId + "/columns?$select=name");
-  const existingNames = new Set(existing.value.map(function(c) { return c.name; }));
+  const existingNames = new Set(existing.value.map(function(c) { return c.name.toLowerCase(); }));
 
   for (const col of columns) {
-    if (existingNames.has(col.name)) continue;
-    const colDef = {
-      name:        col.name,
-      displayName: col.display,
-    };
+    if (existingNames.has(col.name.toLowerCase())) continue;
+    const colDef = { name: col.name };
     if (col.type === "number") {
       colDef.number = { decimalPlaces: "two" };
     } else {
-      colDef.text = { allowMultipleLines: false, maxLength: 500 };
+      colDef.text = { allowMultipleLines: false, maxLength: 255 };
     }
     try {
       await graph(token, "POST", "/sites/" + siteId + "/lists/" + listId + "/columns", colDef);
+      console.log("[SP] Columna creada: " + col.name);
     } catch (e) {
-      console.warn("[SP] Columna \"" + col.name + "\" ya existe o error: " + e.message);
+      console.warn("[SP] Columna \"" + col.name + "\" error: " + e.message);
     }
   }
 }
@@ -249,12 +247,12 @@ async function insertItems(token, siteId, listId, rows, titleField) {
   let inserted = 0;
   for (const row of rows) {
     const fields = {};
-    fields.Title = String(row[titleField] || row.id || "Sin titulo").substring(0, 255);
+    fields.Title = String(row[titleField] || row.sb_id || "Sin titulo").substring(0, 255);
     for (const key of Object.keys(row)) {
       if (key === titleField) continue;
       const val = row[key];
       if (val === null || val === undefined) continue;
-      fields[key] = String(val).substring(0, 500);
+      fields[key] = String(val).substring(0, 255);
     }
     try {
       await graph(token, "POST", "/sites/" + siteId + "/lists/" + listId + "/items", { fields: fields });
