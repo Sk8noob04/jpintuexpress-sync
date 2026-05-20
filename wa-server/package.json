@@ -1,0 +1,15 @@
+{
+  "name": "wa-server-jpintuexpress",
+  "version": "1.0.0",
+  "description": "Servidor local de WhatsApp para JPintuexpress",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "whatsapp-web.js": "^1.26.0",
+    "qrcode-terminal": "^0.12.0",
+    "dotenv": "^16.3.1"
+  }
+}

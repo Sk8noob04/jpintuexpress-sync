@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    /* Solo animar propiedades GPU-composited: no layout triggers */
+    transition-property: background-color, border-color, color, opacity;
+    transition-duration: 150ms;
+    transition-timing-function: ease;
+  }
+
+  body {
+    /* SF Pro en iOS/macOS, fallback limpio en otras plataformas */
+    font-family:
+      -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+      "Helvetica Neue", Arial, sans-serif;
+    /* Mejor renderizado de fuente en móvil */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+}
+
+@layer components {
+  /*
+   * Mobile: card sólida premium (iOS-style, no blur en listas)
+   * sm+: frosted glass con backdrop-blur-xl
+   */
+  .glass-card {
+    @apply bg-white dark:bg-gray-900
+           border border-gray-100 dark:border-white/[0.07]
+           shadow-[0_1px_4px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]
+           dark:shadow-[0_2px_8px_rgba(0,0,0,0.5)]
+           rounded-2xl;
+    /* Desktop: glass effect */
+    @apply sm:bg-white/40 sm:dark:bg-gray-800/40
+           sm:backdrop-blur-xl
+           sm:border-white/30 sm:dark:border-white/10
+           sm:shadow-[0_4px_20px_rgba(0,0,0,0.10)]
+           sm:dark:shadow-[0_4px_24px_rgba(0,0,0,0.5)];
+  }
+
+  /*
+   * Navbar: sólida con blur-sm en móvil (iOS nav bar feel),
+   * glass completo en desktop
+   */
+  .glass-nav {
+    @apply bg-white/95 dark:bg-[#1C1C1E]/95
+           backdrop-blur-sm
+           border-b border-gray-200/70 dark:border-gray-700/40
+           shadow-[0_1px_0_rgba(0,0,0,0.06)] dark:shadow-[0_1px_0_rgba(255,255,255,0.04)];
+    @apply sm:bg-white/70 sm:dark:bg-gray-900/70
+           sm:backdrop-blur-md
+           sm:border-b sm:border-white/40 sm:dark:border-white/10
+           sm:shadow-sm;
+  }
+
+  .glass-input {
+    @apply bg-white dark:bg-gray-800
+           border border-gray-200 dark:border-gray-700
+           text-gray-900 dark:text-gray-100
+           placeholder:text-gray-400 dark:placeholder:text-gray-500
+           focus:ring-2 focus:ring-blue-500/50 focus:border-blue-400 focus:outline-none
+           rounded-xl;
+    @apply sm:bg-white/70 sm:dark:bg-gray-800/70
+           sm:border-white/50 sm:dark:border-white/15;
+  }
+
+  .card {
+    @apply bg-white dark:bg-[#1C1C1E]
+           border border-gray-100 dark:border-gray-700/50
+           sm:bg-white/40 sm:dark:bg-gray-800/40
+           sm:backdrop-blur-xl
+           sm:border-white/30 sm:dark:border-white/10;
+  }
+
+  .field {
+    @apply bg-white dark:bg-gray-800
+           border border-gray-200 dark:border-gray-700
+           text-gray-900 dark:text-gray-100
+           placeholder:text-gray-400 dark:placeholder:text-gray-500
+           focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:outline-none;
+  }
+}
+
+/*
+ * solicitud-card: plain CSS (no Tailwind JIT) para garantizar el efecto
+ * frosted glass en dark mode sin depender del scanner de clases de Tailwind.
+ * Light: iOS blanco limpio. Dark: translúcido premium con backdrop-blur.
+ */
+.solicitud-card {
+  background-color: #ffffff;
+  border-color: rgb(243 244 246);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+.solicitud-card:hover {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.04);
+}
+.dark .solicitud-card {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.07);
+}
+.dark .solicitud-card:hover {
+  background-color: rgba(255, 255, 255, 0.10);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.40), inset 0 1px 0 rgba(255,255,255,0.10);
+}

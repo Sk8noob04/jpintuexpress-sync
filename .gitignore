@@ -1,0 +1,59 @@
+# Dependencias
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# Testing
+/coverage
+
+# Next.js
+/.next/
+/out/
+
+# Producción
+/build
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Variables de entorno locales (NUNCA subir credenciales reales a git)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+tscheck.json
+
+.vercel
+
+# Archivos temporales / Office
+~$*
+*.tmp
+
+# Deploy output logs
+deploy_output.txt
+
+# wa-server (sesion y cache de WhatsApp — nunca subir)
+wa-server/wa-session/
+wa-server/.wwebjs_cache/
+wa-server/node_modules/
+wa-server/.env

@@ -1,0 +1,13 @@
+# WhatsApp local server — runs on the user's PC, not deployed to Vercel
+wa-server/
+
+# Dev/build artifacts
+.next/
+node_modules/
+
+# Local env — never expose to Vercel (env vars are set in Vercel dashboard)
+.env.local
+.env*.local
+
+# TypeScript incremental build cache — regenerated on each build
+tsconfig.tsbuildinfo
