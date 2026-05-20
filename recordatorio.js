@@ -69,23 +69,22 @@ function getPrioridadColor(nombre) {
 
 function buildRows(solicitudes) {
   if (!solicitudes || solicitudes.length === 0) {
-    return '<tr><td colspan="5" bgcolor="#0f172a" style="padding:24px;text-align:center;color:#64748b;font-size:14px;background-color:#0f172a;">Sin solicitudes prioritarias</td></tr>';
+    return '<tr><td colspan="5" style="padding:24px;text-align:center;color:#64748b;font-size:14px;">No hay solicitudes prioritarias</td></tr>';
   }
-  return solicitudes.map(function(r, i) {
+  return solicitudes.map(function(r) {
     var linkUrl = r.token_aprobacion
       ? APP_URL + "/aprobar/" + r.token_aprobacion
       : APP_URL + "/aprobaciones";
     var prioColor = getPrioridadColor(r.prioridad && r.prioridad.nombre);
     var prioLabel = (r.prioridad && r.prioridad.nombre) ? r.prioridad.nombre : "—";
-    var rowBg = i % 2 === 0 ? "#0f172a" : "#111827";
     return (
       '<tr>' +
-        '<td bgcolor="' + rowBg + '" style="padding:14px 16px;font-size:13px;color:#ffffff;border-bottom:1px solid #1e293b;background-color:' + rowBg + ';">' + (r.motivo || "—") + '</td>' +
-        '<td bgcolor="' + rowBg + '" style="padding:14px 16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;background-color:' + rowBg + ';">' + (r.solicitante && r.solicitante.nombre_completo ? r.solicitante.nombre_completo : "—") + '</td>' +
-        '<td bgcolor="' + rowBg + '" style="padding:14px 16px;font-size:13px;color:#ffffff;border-bottom:1px solid #1e293b;white-space:nowrap;background-color:' + rowBg + ';">' + formatCurrency(r.costo_estimado) + '</td>' +
-        '<td bgcolor="' + rowBg + '" style="padding:14px 16px;font-size:13px;color:' + prioColor + ';border-bottom:1px solid #1e293b;white-space:nowrap;background-color:' + rowBg + ';">&#9679; ' + prioLabel + '</td>' +
-        '<td bgcolor="' + rowBg + '" style="padding:14px 16px;text-align:center;border-bottom:1px solid #1e293b;background-color:' + rowBg + ';">' +
-          '<a href="' + linkUrl + '" style="background-color:#2563eb;color:#ffffff;padding:5px 12px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;display:inline-block;">Ver &#8594;</a>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#ffffff;border-bottom:1px solid #1e293b;">' + (r.motivo || "—") + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#cbd5e1;border-bottom:1px solid #1e293b;">' + (r.solicitante && r.solicitante.nombre_completo ? r.solicitante.nombre_completo : "—") + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:#ffffff;border-bottom:1px solid #1e293b;">' + formatCurrency(r.costo_estimado) + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;color:' + prioColor + ';border-bottom:1px solid #1e293b;">&#9679; ' + prioLabel + '</td>' +
+        '<td style="padding:18px 16px;font-size:14px;border-bottom:1px solid #1e293b;text-align:center;">' +
+          '<a href="' + linkUrl + '" style="background:#2563eb;color:#ffffff;padding:6px 14px;border-radius:8px;text-decoration:none;font-size:12px;font-weight:600;white-space:nowrap;">Ver &rarr;</a>' +
         '</td>' +
       '</tr>'
     );
@@ -124,117 +123,90 @@ async function main() {
     return;
   }
 
+  // Última solicitud para CTA
   const ultima = solicitudes[solicitudes.length - 1];
   const ctaUrl = ultima && ultima.token_aprobacion
     ? APP_URL + "/aprobar/" + ultima.token_aprobacion
     : APP_URL + "/aprobaciones";
 
+  // Solicitudes prioritarias (nivel > 0 y <= 2)
   const destacadas = solicitudes.filter(function(r) {
     var nivel = r.prioridad && r.prioridad.nivel ? r.prioridad.nivel : 0;
     return nivel <= 2 && nivel > 0;
   });
 
+  // Mostrar prioritarias si hay, sino todas
   const tablaItems = destacadas.length > 0 ? destacadas : solicitudes;
+
   const now = new Date().toLocaleString("es-PA", { timeZone: "America/Panama", dateStyle: "full", timeStyle: "short" });
 
-  const html =
-'<!DOCTYPE html>' +
-'<html lang="es" xmlns="http://www.w3.org/1999/xhtml">' +
-'<head>' +
-'<meta charset="UTF-8"/>' +
-'<meta name="viewport" content="width=device-width,initial-scale=1.0"/>' +
-'<meta name="color-scheme" content="dark"/>' +
-'<meta name="supported-color-schemes" content="dark"/>' +
-'<title>Recordatorio de solicitudes</title>' +
-'</head>' +
-'<body style="margin:0;padding:0;background-color:#050816;" bgcolor="#050816">' +
-
-'<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#050816" style="background-color:#050816;padding:32px 16px;">' +
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>' +
+'<body style="margin:0;padding:0;background:#050816;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">' +
+'<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050816;padding:40px 20px;">' +
 '<tr><td align="center">' +
 
-  '<!-- CONTENEDOR -->' +
-  '<table width="620" cellpadding="0" cellspacing="0" border="0" style="width:620px;max-width:620px;">' +
+'<table width="650" cellpadding="0" cellspacing="0" border="0" style="width:650px;max-width:650px;background:#0b1220;border:1px solid #1f2937;border-radius:20px;overflow:hidden;">' +
 
-    '<!-- HEADER -->' +
-    '<tr>' +
-      '<td bgcolor="#1d4ed8" style="background-color:#1d4ed8;padding:28px 36px;border-radius:16px 16px 0 0;">' +
-        '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-          '<td>' +
-            '<div style="font-size:26px;font-weight:bold;color:#ffffff;letter-spacing:-0.5px;">J Pintuexpress</div>' +
-            '<div style="margin-top:6px;font-size:14px;color:#bfdbfe;">Recordatorio de solicitudes pendientes</div>' +
-          '</td>' +
-          '<td align="right" valign="middle">' +
-            '<div style="font-size:32px;line-height:1;">&#128203;</div>' +
-          '</td>' +
-        '</tr></table>' +
-      '</td>' +
+'<!-- HEADER -->' +
+'<tr><td style="padding:32px 40px;background:linear-gradient(90deg,#1d4ed8,#2563eb);">' +
+  '<div style="font-size:28px;font-weight:bold;letter-spacing:-1px;color:#ffffff;">J Pintuexpress</div>' +
+  '<div style="margin-top:8px;font-size:15px;color:rgba(255,255,255,0.85);">Recordatorio de solicitudes pendientes</div>' +
+'</td></tr>' +
+
+'<!-- BODY -->' +
+'<tr><td style="padding:40px;">' +
+
+  '<div style="font-size:13px;color:#94a3b8;margin-bottom:28px;">' + now + '</div>' +
+
+  '<!-- STATS -->' +
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+    '<td width="48%" valign="top">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+        '<tr><td style="padding:28px;text-align:center;">' +
+          '<div style="font-size:42px;font-weight:bold;color:#ffffff;">' + total + '</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Solicitudes pendientes</div>' +
+        '</td></tr>' +
+      '</table>' +
+    '</td>' +
+    '<td width="4%"></td>' +
+    '<td width="48%" valign="top">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+        '<tr><td style="padding:28px;text-align:center;">' +
+          '<div style="font-size:32px;font-weight:bold;color:#34d399;">' + formatCurrency(totalValor) + '</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Valor total pendiente</div>' +
+        '</td></tr>' +
+      '</table>' +
+    '</td>' +
+  '</tr></table>' +
+
+  '<!-- TABLA -->' +
+  '<div style="margin-top:40px;margin-bottom:18px;font-size:22px;font-weight:bold;color:#ffffff;">&#9889; Solicitudes prioritarias</div>' +
+
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;overflow:hidden;border-radius:14px;background:#0f172a;border:1px solid #1e293b;">' +
+    '<tr style="background:#111827;">' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Descripci&oacute;n</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Solicitante</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Valor</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Prioridad</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Acci&oacute;n</th>' +
     '</tr>' +
-
-    '<!-- BODY -->' +
-    '<tr>' +
-      '<td bgcolor="#0b1220" style="background-color:#0b1220;padding:32px 36px;">' +
-
-        '<div style="font-size:12px;color:#64748b;margin-bottom:24px;">' + now + '</div>' +
-
-        '<!-- STATS -->' +
-        '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-
-          '<td width="47%" valign="top">' +
-            '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #1e293b;border-radius:12px;">' +
-              '<tr><td bgcolor="#0f172a" style="background-color:#0f172a;padding:24px 16px;text-align:center;border-radius:12px;">' +
-                '<div style="font-size:40px;font-weight:bold;color:#ffffff;line-height:1;">' + total + '</div>' +
-                '<div style="margin-top:8px;font-size:13px;color:#64748b;">Solicitudes pendientes</div>' +
-              '</td></tr>' +
-            '</table>' +
-          '</td>' +
-
-          '<td width="6%"></td>' +
-
-          '<td width="47%" valign="top">' +
-            '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #1e293b;border-radius:12px;">' +
-              '<tr><td bgcolor="#0f172a" style="background-color:#0f172a;padding:24px 16px;text-align:center;border-radius:12px;">' +
-                '<div style="font-size:26px;font-weight:bold;color:#34d399;line-height:1;">' + formatCurrency(totalValor) + '</div>' +
-                '<div style="margin-top:8px;font-size:13px;color:#64748b;">Valor total pendiente</div>' +
-              '</td></tr>' +
-            '</table>' +
-          '</td>' +
-
-        '</tr></table>' +
-
-        '<!-- TITULO TABLA -->' +
-        '<div style="margin-top:32px;margin-bottom:14px;font-size:18px;font-weight:bold;color:#ffffff;">&#9889; Solicitudes prioritarias</div>' +
-
-        '<!-- TABLA -->' +
-        '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border:1px solid #1e293b;border-radius:12px;">' +
-          '<tr bgcolor="#111827" style="background-color:#111827;">' +
-            '<th align="left" bgcolor="#111827" style="padding:12px 16px;font-size:12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #1e293b;background-color:#111827;">Descripci&#243;n</th>' +
-            '<th align="left" bgcolor="#111827" style="padding:12px 16px;font-size:12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #1e293b;background-color:#111827;">Solicitante</th>' +
-            '<th align="left" bgcolor="#111827" style="padding:12px 16px;font-size:12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #1e293b;background-color:#111827;">Valor</th>' +
-            '<th align="left" bgcolor="#111827" style="padding:12px 16px;font-size:12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #1e293b;background-color:#111827;">Prioridad</th>' +
-            '<th align="left" bgcolor="#111827" style="padding:12px 16px;font-size:12px;color:#94a3b8;font-weight:600;border-bottom:1px solid #1e293b;background-color:#111827;">Acci&#243;n</th>' +
-          '</tr>' +
-          buildRows(tablaItems) +
-        '</table>' +
-
-        '<!-- CTA -->' +
-        '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:32px;"><tr><td align="center">' +
-          '<a href="' + ctaUrl + '" style="display:inline-block;background-color:#2563eb;color:#ffffff;text-decoration:none;padding:14px 32px;font-size:15px;font-weight:bold;border-radius:10px;">Ver &#250;ltima solicitud &#8594;</a>' +
-        '</td></tr></table>' +
-
-      '</td>' +
-    '</tr>' +
-
-    '<!-- FOOTER -->' +
-    '<tr>' +
-      '<td bgcolor="#0b1220" style="background-color:#0b1220;padding:20px 36px;border-top:1px solid #1e293b;border-radius:0 0 16px 16px;text-align:center;">' +
-        '<div style="font-size:12px;color:#475569;line-height:1.6;">Este es un mensaje autom&#225;tico del sistema interno de solicitudes.<br/>No respondas a este correo.</div>' +
-      '</td>' +
-    '</tr>' +
-
+    buildRows(tablaItems) +
   '</table>' +
 
-'</td></tr></table>' +
-'</body></html>';
+  '<!-- CTA -->' +
+  '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td align="center">' +
+    '<a href="' + ctaUrl + '" style="display:inline-block;margin-top:36px;background:linear-gradient(90deg,#2563eb,#3b82f6);color:#ffffff;text-decoration:none;padding:16px 34px;font-size:15px;font-weight:bold;border-radius:12px;">Ver &uacute;ltima solicitud &rarr;</a>' +
+  '</td></tr></table>' +
+
+'</td></tr>' +
+
+'<!-- FOOTER -->' +
+'<tr><td style="padding:24px 40px;border-top:1px solid #1e293b;text-align:center;">' +
+  '<div style="font-size:12px;color:#64748b;line-height:1.6;">Este es un mensaje autom&aacute;tico del sistema interno de solicitudes.<br>No respondas a este correo.</div>' +
+'</td></tr>' +
+
+'</table>' +
+'</td></tr></table></body></html>';
 
   const token = await getToken();
   await sendMail(token, toEmail, "📋 Tienes " + total + " solicitudes pendientes — J Pintuexpress", html);
