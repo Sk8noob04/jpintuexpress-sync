@@ -100,7 +100,7 @@ async function main() {
 
   const destacadas = solicitudes.filter(r => {
     const nivel = r.prioridad?.nivel || 0;
-    return nivel >= 2;
+    return nivel <= 2 && nivel > 0;
   });
 
   const now = new Date().toLocaleString("es-PA", { timeZone: "America/Panama", dateStyle: "full", timeStyle: "short" });
