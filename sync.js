@@ -16,15 +16,18 @@ const SHAREPOINT_URL    = process.env.SHAREPOINT_SITE_URL; // ej: https://empres
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // ── Definición de tablas a sincronizar ───────────────────────
+// tableName:  nombre real de la tabla en Supabase
+// listName:   nombre de la lista en SharePoint
 // titleField: columna que se usa como "Título" en SharePoint (requerido)
-// select: query de Supabase (con joins)
-// flatten: función que aplana el resultado del join a un objeto plano
+// select:     query de Supabase (con joins)
+// flatten:    función que aplana el resultado del join a un objeto plano
 const TABLES = [
   {
-    listName: "Solicitudes de Compra",
+    tableName: "solicitudes",
+    listName:  "Solicitudes de Compra",
     titleField: "motivo",
     select: `id, motivo, costo_estimado, estado, comentario_aprobador,
-             imagen_url, created_at, updated_at,
+             imagen_url, placa, token_aprobacion, created_at, updated_at,
              linea:lineas(nombre),
              activo:activos(nombre),
              solicitante:profiles!solicitante_id(nombre_completo),
@@ -40,6 +43,8 @@ const TABLES = [
       aprobador:             r.aprobador?.nombre_completo ?? "",
       comentario_aprobador:  r.comentario_aprobador ?? "",
       imagen_url:            r.imagen_url ?? "",
+      placa:                 r.placa ?? "",
+      token_aprobacion:      r.token_aprobacion ?? "",
       created_at:            r.created_at,
       updated_at:            r.updated_at,
     }),
@@ -53,19 +58,23 @@ const TABLES = [
       { name: "aprobador",            display: "Aprobador",            type: "text" },
       { name: "comentario_aprobador", display: "Comentario Aprobador", type: "text" },
       { name: "imagen_url",           display: "Imagen URL",           type: "text" },
+      { name: "placa",                display: "Placa",                type: "text" },
+      { name: "token_aprobacion",     display: "Token Aprobación",     type: "text" },
       { name: "created_at",           display: "Fecha Creación",       type: "text" },
       { name: "updated_at",           display: "Última Actualización", type: "text" },
     ],
   },
   {
-    listName: "Usuarios",
+    tableName: "profiles",
+    listName:  "Usuarios",
     titleField: "nombre_completo",
-    select: "id, nombre_completo, email, role, debe_cambiar_password, created_at, updated_at",
+    select: "id, nombre_completo, email, role, telefono, debe_cambiar_password, created_at, updated_at",
     flatten: (r) => ({
       id:                   r.id,
       nombre_completo:      r.nombre_completo,
       email:                r.email,
       role:                 r.role,
+      telefono:             r.telefono ?? "",
       debe_cambiar_password: r.debe_cambiar_password ? "Sí" : "No",
       created_at:           r.created_at,
       updated_at:           r.updated_at,
@@ -74,13 +83,15 @@ const TABLES = [
       { name: "id",                    display: "ID",                      type: "text" },
       { name: "email",                 display: "Email",                   type: "text" },
       { name: "role",                  display: "Rol",                     type: "text" },
+      { name: "telefono",              display: "Teléfono",                type: "text" },
       { name: "debe_cambiar_password", display: "Debe Cambiar Contraseña", type: "text" },
       { name: "created_at",            display: "Fecha Creación",          type: "text" },
       { name: "updated_at",            display: "Última Actualización",    type: "text" },
     ],
   },
   {
-    listName: "Líneas",
+    tableName: "lineas",
+    listName:  "Líneas",
     titleField: "nombre",
     select: "id, nombre, activa, created_at",
     flatten: (r) => ({
@@ -96,7 +107,8 @@ const TABLES = [
     ],
   },
   {
-    listName: "Activos",
+    tableName: "activos",
+    listName:  "Activos",
     titleField: "nombre",
     select: "id, nombre, activo, created_at, linea:lineas(nombre)",
     flatten: (r) => ({
@@ -111,6 +123,29 @@ const TABLES = [
       { name: "linea",      display: "Línea",          type: "text" },
       { name: "activo",     display: "Activo",         type: "text" },
       { name: "created_at", display: "Fecha Creación", type: "text" },
+    ],
+  },
+  {
+    tableName: "user_audit_log",
+    listName:  "Auditoría de Usuarios",
+    titleField: "accion",
+    select: `id, accion, detalles, created_at,
+             admin:profiles!admin_id(nombre_completo),
+             usuario:profiles!usuario_id(nombre_completo)`,
+    flatten: (r) => ({
+      id:         r.id,
+      accion:     r.accion,
+      admin:      r.admin?.nombre_completo ?? "",
+      usuario:    r.usuario?.nombre_completo ?? "",
+      detalles:   JSON.stringify(r.detalles ?? {}),
+      created_at: r.created_at,
+    }),
+    columns: [
+      { name: "id",         display: "ID",             type: "text" },
+      { name: "admin",      display: "Administrador",  type: "text" },
+      { name: "usuario",    display: "Usuario",        type: "text" },
+      { name: "detalles",   display: "Detalles",       type: "text" },
+      { name: "created_at", display: "Fecha",          type: "text" },
     ],
   },
 ];
@@ -174,7 +209,6 @@ async function getOrCreateList(token, siteId, displayName) {
     list: { template: "genericList" },
   });
   console.log(`[SP] Lista creada: "${displayName}" (${created.id})`);
-  // Agregar columnas personalizadas
   return created.id;
 }
 
@@ -253,50 +287,4 @@ async function syncTable(token, siteId, tableDef) {
   console.log(`\n━━━ Sincronizando: ${tableDef.listName} ━━━`);
 
   // 1. Obtener datos de Supabase
-  const { data, error } = await supabase
-    .from(tableDef.listName === "Solicitudes de Compra" ? "solicitudes"
-        : tableDef.listName === "Usuarios"              ? "profiles"
-        : tableDef.listName === "Líneas"                ? "lineas"
-        : "activos")
-    .select(tableDef.select)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error(`Supabase error en ${tableDef.listName}: ${error.message}`);
-  const rows = data.map(tableDef.flatten);
-  console.log(`[SB] ${rows.length} filas obtenidas de Supabase`);
-
-  // 2. Obtener o crear lista en SharePoint
-  const listId = await getOrCreateList(token, siteId, tableDef.listName);
-
-  // 3. Asegurar que las columnas existan
-  await ensureColumns(token, siteId, listId, tableDef.columns);
-
-  // 4. Limpiar ítems anteriores
-  await clearAllItems(token, siteId, listId);
-
-  // 5. Insertar datos actuales
-  await insertItems(token, siteId, listId, rows, tableDef.titleField);
-}
-
-async function main() {
-  const start = new Date();
-  console.log(`\n🔄 JPintuexpress Sync — ${start.toISOString()}`);
-  console.log("─".repeat(50));
-
-  try {
-    const token  = await getToken();
-    const siteId = await getSiteId(token);
-
-    for (const table of TABLES) {
-      await syncTable(token, siteId, table);
-    }
-
-    const elapsed = ((Date.now() - start.getTime()) / 1000).toFixed(1);
-    console.log(`\n✅ Sincronización completa en ${elapsed}s`);
-  } catch (err) {
-    console.error(`\n❌ Error en sincronización: ${err.message}`);
-    process.exit(1);
-  }
-}
-
-main();
+  const { 
