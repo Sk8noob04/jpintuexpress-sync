@@ -86,7 +86,7 @@ function buildRows(items) {
               '</td>' +
               '<td valign="top">' +
                 '<div style="font-size:13px;font-weight:600;color:#f1f5f9;line-height:1.4;">' + motivo + '</div>' +
-                '<div style="font-size:12px;color:#64748b;margin-top:3px;">' + solicit + '</div>' +
+                '<div style="font-size:12px;color:#60a5fa;margin-top:3px;font-weight:500;">' + solicit + '</div>' +
                 '<div style="font-size:13px;font-weight:700;color:#ffffff;margin-top:4px;">' + costo + '</div>' +
               '</td>' +
             '</tr></table>' +
