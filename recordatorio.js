@@ -140,28 +140,7 @@ async function main() {
 
   const now = new Date().toLocaleString("es-PA", { timeZone: "America/Panama", dateStyle: "full", timeStyle: "short" });
 
-  const html = '<!DOCTYPE html><html lang="es" xmlns="http://www.w3.org/1999/xhtml">' +
-'<head>' +
-'<meta charset="UTF-8"/>' +
-'<meta name="viewport" content="width=device-width,initial-scale=1.0"/>' +
-'<meta name="color-scheme" content="dark light"/>' +
-'<meta name="supported-color-schemes" content="dark light"/>' +
-'<title>Recordatorio de solicitudes</title>' +
-'<style type="text/css">' +
-'@media (prefers-color-scheme:dark){' +
-'body,table,td,div{background-color:#050816 !important;color:#ffffff !important;}' +
-'.header{background-color:#1d4ed8 !important;}' +
-'.card{background-color:#0f172a !important;border-color:#1e293b !important;}' +
-'.card-num{color:#ffffff !important;}' +
-'.card-val{color:#34d399 !important;}' +
-'.card-lbl{color:#94a3b8 !important;}' +
-'.th{background-color:#111827 !important;color:#cbd5e1 !important;}' +
-'.td{color:#ffffff !important;}' +
-'.tdsub{color:#cbd5e1 !important;}' +
-'.footer{color:#64748b !important;}' +
-'}' +
-'</style>' +
-'</head>' +
+  const html = '<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/></head>' +
 '<body style="margin:0;padding:0;background:#050816;font-family:Arial,Helvetica,sans-serif;color:#ffffff;">' +
 '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#050816;padding:40px 20px;">' +
 '<tr><td align="center">' +
@@ -169,7 +148,7 @@ async function main() {
 '<table width="650" cellpadding="0" cellspacing="0" border="0" style="width:650px;max-width:650px;background:#0b1220;border:1px solid #1f2937;border-radius:20px;overflow:hidden;">' +
 
 '<!-- HEADER -->' +
-'<tr><td class="header" style="padding:32px 40px;background:linear-gradient(90deg,#1d4ed8,#2563eb);background-color:#1d4ed8;">' +
+'<tr><td style="padding:32px 40px;background:linear-gradient(90deg,#1d4ed8,#2563eb);">' +
   '<div style="font-size:28px;font-weight:bold;letter-spacing:-1px;color:#ffffff;">J Pintuexpress</div>' +
   '<div style="margin-top:8px;font-size:15px;color:rgba(255,255,255,0.85);">Recordatorio de solicitudes pendientes</div>' +
 '</td></tr>' +
@@ -182,19 +161,19 @@ async function main() {
   '<!-- STATS -->' +
   '<table width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
     '<td width="48%" valign="top">' +
-      '<table width="100%" cellpadding="0" cellspacing="0" border="0" class="card" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
         '<tr><td style="padding:28px;text-align:center;">' +
-          '<div class="card-num" style="font-size:42px;font-weight:bold;color:#ffffff;">' + total + '</div>' +
-          '<div class="card-lbl" style="margin-top:8px;font-size:14px;color:#94a3b8;">Solicitudes pendientes</div>' +
+          '<div style="font-size:42px;font-weight:bold;color:#ffffff;">' + total + '</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Solicitudes pendientes</div>' +
         '</td></tr>' +
       '</table>' +
     '</td>' +
     '<td width="4%"></td>' +
     '<td width="48%" valign="top">' +
-      '<table width="100%" cellpadding="0" cellspacing="0" border="0" class="card" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
+      '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#0f172a;border:1px solid #1e293b;border-radius:16px;">' +
         '<tr><td style="padding:28px;text-align:center;">' +
           '<div style="font-size:32px;font-weight:bold;color:#34d399;">' + formatCurrency(totalValor) + '</div>' +
-          '<div class="card-lbl" style="margin-top:8px;font-size:14px;color:#94a3b8;">Valor total pendiente</div>' +
+          '<div style="margin-top:8px;font-size:14px;color:#94a3b8;">Valor total pendiente</div>' +
         '</td></tr>' +
       '</table>' +
     '</td>' +
@@ -205,11 +184,11 @@ async function main() {
 
   '<table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse;overflow:hidden;border-radius:14px;background:#0f172a;border:1px solid #1e293b;">' +
     '<tr style="background:#111827;">' +
-      '<th align="left" class="th" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Descripci&oacute;n</th>' +
-      '<th align="left" class="th" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Solicitante</th>' +
-      '<th align="left" class="th" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Valor</th>' +
-      '<th align="left" class="th" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Prioridad</th>' +
-      '<th align="left" class="th" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Acci&oacute;n</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Descripci&oacute;n</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Solicitante</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Valor</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Prioridad</th>' +
+      '<th align="left" style="padding:16px;font-size:13px;color:#cbd5e1;border-bottom:1px solid #1e293b;">Acci&oacute;n</th>' +
     '</tr>' +
     buildRows(tablaItems) +
   '</table>' +
