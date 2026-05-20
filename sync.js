@@ -11,40 +11,30 @@ const SUPABASE_KEY      = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const TENANT_ID         = process.env.AZURE_TENANT_ID;
 const CLIENT_ID         = process.env.AZURE_CLIENT_ID;
 const CLIENT_SECRET     = process.env.AZURE_CLIENT_SECRET;
-const SHAREPOINT_URL    = process.env.SHAREPOINT_SITE_URL; // ej: https://empresa.sharepoint.com/sites/NombreSitio
+const SHAREPOINT_URL    = process.env.SHAREPOINT_SITE_URL;
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Definición de tablas a sincronizar ───────────────────────
-// tableName:  nombre real de la tabla en Supabase
-// listName:   nombre de la lista en SharePoint
-// titleField: columna que se usa como "Título" en SharePoint (requerido)
-// select:     query de Supabase (con joins)
-// flatten:    función que aplana el resultado del join a un objeto plano
+// ── Tablas a sincronizar ─────────────────────────────────────
 const TABLES = [
   {
     tableName: "solicitudes",
     listName:  "Solicitudes de Compra",
     titleField: "motivo",
-    select: `id, motivo, costo_estimado, estado, comentario_aprobador,
-             imagen_url, placa, token_aprobacion, created_at, updated_at,
-             linea:lineas(nombre),
-             activo:activos(nombre),
-             solicitante:profiles!solicitante_id(nombre_completo),
-             aprobador:profiles!aprobador_id(nombre_completo)`,
+    select: "id, motivo, costo_estimado, estado, comentario_aprobador, imagen_url, placa, token_aprobacion, created_at, updated_at, linea:lineas(nombre), activo:activos(nombre), solicitante:profiles!solicitante_id(nombre_completo), aprobador:profiles!aprobador_id(nombre_completo)",
     flatten: (r) => ({
       id:                    r.id,
       motivo:                r.motivo,
       costo_estimado:        r.costo_estimado,
       estado:                r.estado,
-      linea:                 r.linea?.nombre ?? "",
-      activo:                r.activo?.nombre ?? "",
-      solicitante:           r.solicitante?.nombre_completo ?? "",
-      aprobador:             r.aprobador?.nombre_completo ?? "",
-      comentario_aprobador:  r.comentario_aprobador ?? "",
-      imagen_url:            r.imagen_url ?? "",
-      placa:                 r.placa ?? "",
-      token_aprobacion:      r.token_aprobacion ?? "",
+      linea:                 r.linea ? r.linea.nombre : "",
+      activo:                r.activo ? r.activo.nombre : "",
+      solicitante:           r.solicitante ? r.solicitante.nombre_completo : "",
+      aprobador:             r.aprobador ? r.aprobador.nombre_completo : "",
+      comentario_aprobador:  r.comentario_aprobador || "",
+      imagen_url:            r.imagen_url || "",
+      placa:                 r.placa || "",
+      token_aprobacion:      r.token_aprobacion || "",
       created_at:            r.created_at,
       updated_at:            r.updated_at,
     }),
@@ -52,16 +42,16 @@ const TABLES = [
       { name: "id",                   display: "ID",                   type: "text" },
       { name: "costo_estimado",       display: "Costo Estimado",       type: "number" },
       { name: "estado",               display: "Estado",               type: "text" },
-      { name: "linea",                display: "Línea",                type: "text" },
+      { name: "linea",                display: "Linea",                type: "text" },
       { name: "activo",               display: "Activo",               type: "text" },
       { name: "solicitante",          display: "Solicitante",          type: "text" },
       { name: "aprobador",            display: "Aprobador",            type: "text" },
       { name: "comentario_aprobador", display: "Comentario Aprobador", type: "text" },
       { name: "imagen_url",           display: "Imagen URL",           type: "text" },
       { name: "placa",                display: "Placa",                type: "text" },
-      { name: "token_aprobacion",     display: "Token Aprobación",     type: "text" },
-      { name: "created_at",           display: "Fecha Creación",       type: "text" },
-      { name: "updated_at",           display: "Última Actualización", type: "text" },
+      { name: "token_aprobacion",     display: "Token Aprobacion",     type: "text" },
+      { name: "created_at",           display: "Fecha Creacion",       type: "text" },
+      { name: "updated_at",           display: "Ultima Actualizacion", type: "text" },
     ],
   },
   {
@@ -74,8 +64,8 @@ const TABLES = [
       nombre_completo:      r.nombre_completo,
       email:                r.email,
       role:                 r.role,
-      telefono:             r.telefono ?? "",
-      debe_cambiar_password: r.debe_cambiar_password ? "Sí" : "No",
+      telefono:             r.telefono || "",
+      debe_cambiar_password: r.debe_cambiar_password ? "Si" : "No",
       created_at:           r.created_at,
       updated_at:           r.updated_at,
     }),
@@ -83,27 +73,27 @@ const TABLES = [
       { name: "id",                    display: "ID",                      type: "text" },
       { name: "email",                 display: "Email",                   type: "text" },
       { name: "role",                  display: "Rol",                     type: "text" },
-      { name: "telefono",              display: "Teléfono",                type: "text" },
-      { name: "debe_cambiar_password", display: "Debe Cambiar Contraseña", type: "text" },
-      { name: "created_at",            display: "Fecha Creación",          type: "text" },
-      { name: "updated_at",            display: "Última Actualización",    type: "text" },
+      { name: "telefono",              display: "Telefono",                type: "text" },
+      { name: "debe_cambiar_password", display: "Debe Cambiar Contrasena", type: "text" },
+      { name: "created_at",            display: "Fecha Creacion",          type: "text" },
+      { name: "updated_at",            display: "Ultima Actualizacion",    type: "text" },
     ],
   },
   {
     tableName: "lineas",
-    listName:  "Líneas",
+    listName:  "Lineas",
     titleField: "nombre",
     select: "id, nombre, activa, created_at",
     flatten: (r) => ({
       id:         r.id,
       nombre:     r.nombre,
-      activa:     r.activa ? "Sí" : "No",
+      activa:     r.activa ? "Si" : "No",
       created_at: r.created_at,
     }),
     columns: [
       { name: "id",         display: "ID",             type: "text" },
       { name: "activa",     display: "Activa",         type: "text" },
-      { name: "created_at", display: "Fecha Creación", type: "text" },
+      { name: "created_at", display: "Fecha Creacion", type: "text" },
     ],
   },
   {
@@ -114,38 +104,36 @@ const TABLES = [
     flatten: (r) => ({
       id:         r.id,
       nombre:     r.nombre,
-      linea:      r.linea?.nombre ?? "",
-      activo:     r.activo ? "Sí" : "No",
+      linea:      r.linea ? r.linea.nombre : "",
+      activo:     r.activo ? "Si" : "No",
       created_at: r.created_at,
     }),
     columns: [
       { name: "id",         display: "ID",             type: "text" },
-      { name: "linea",      display: "Línea",          type: "text" },
+      { name: "linea",      display: "Linea",          type: "text" },
       { name: "activo",     display: "Activo",         type: "text" },
-      { name: "created_at", display: "Fecha Creación", type: "text" },
+      { name: "created_at", display: "Fecha Creacion", type: "text" },
     ],
   },
   {
     tableName: "user_audit_log",
-    listName:  "Auditoría de Usuarios",
+    listName:  "Auditoria de Usuarios",
     titleField: "accion",
-    select: `id, accion, detalles, created_at,
-             admin:profiles!admin_id(nombre_completo),
-             usuario:profiles!usuario_id(nombre_completo)`,
+    select: "id, accion, detalles, created_at, admin:profiles!admin_id(nombre_completo), usuario:profiles!usuario_id(nombre_completo)",
     flatten: (r) => ({
       id:         r.id,
       accion:     r.accion,
-      admin:      r.admin?.nombre_completo ?? "",
-      usuario:    r.usuario?.nombre_completo ?? "",
-      detalles:   JSON.stringify(r.detalles ?? {}),
+      admin:      r.admin ? r.admin.nombre_completo : "",
+      usuario:    r.usuario ? r.usuario.nombre_completo : "",
+      detalles:   JSON.stringify(r.detalles || {}),
       created_at: r.created_at,
     }),
     columns: [
-      { name: "id",         display: "ID",             type: "text" },
-      { name: "admin",      display: "Administrador",  type: "text" },
-      { name: "usuario",    display: "Usuario",        type: "text" },
-      { name: "detalles",   display: "Detalles",       type: "text" },
-      { name: "created_at", display: "Fecha",          type: "text" },
+      { name: "id",         display: "ID",            type: "text" },
+      { name: "admin",      display: "Administrador", type: "text" },
+      { name: "usuario",    display: "Usuario",       type: "text" },
+      { name: "detalles",   display: "Detalles",      type: "text" },
+      { name: "created_at", display: "Fecha",         type: "text" },
     ],
   },
 ];
@@ -154,7 +142,7 @@ const TABLES = [
 
 async function getToken() {
   const res = await fetch(
-    `https://login.microsoftonline.com/${TENANT_ID}/oauth2/v2.0/token`,
+    "https://login.microsoftonline.com/" + TENANT_ID + "/oauth2/v2.0/token",
     {
       method: "POST",
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
@@ -171,18 +159,19 @@ async function getToken() {
   return data.access_token;
 }
 
-async function graph(token, method, path, body = null) {
-  const res = await fetch(`https://graph.microsoft.com/v1.0${path}`, {
+async function graph(token, method, path, body) {
+  const res = await fetch("https://graph.microsoft.com/v1.0" + path, {
     method,
     headers: {
-      Authorization:  `Bearer ${token}`,
+      Authorization:  "Bearer " + token,
       "Content-Type": "application/json",
     },
     body: body ? JSON.stringify(body) : undefined,
   });
-  if (res.status === 204 || res.status === 200 && res.headers.get("content-length") === "0") return null;
+  if (res.status === 204) return null;
+  if (res.status === 200 && res.headers.get("content-length") === "0") return null;
   const data = await res.json();
-  if (data.error) throw new Error(`Graph ${method} ${path} → ${data.error.code}: ${data.error.message}`);
+  if (data.error) throw new Error("Graph " + method + " " + path + " -> " + data.error.code + ": " + data.error.message);
   return data;
 }
 
@@ -190,32 +179,29 @@ async function getSiteId(token) {
   const url  = new URL(SHAREPOINT_URL);
   const host = url.hostname;
   const path = url.pathname;
-  const data = await graph(token, "GET", `/sites/${host}:${path}`);
-  console.log(`[SP] Site ID: ${data.id}`);
+  const data = await graph(token, "GET", "/sites/" + host + ":" + path);
+  console.log("[SP] Site ID: " + data.id);
   return data.id;
 }
 
 async function getOrCreateList(token, siteId, displayName) {
-  // Buscar si ya existe
-  const lists = await graph(token, "GET", `/sites/${siteId}/lists?$select=id,displayName`);
-  const existing = lists.value.find(l => l.displayName === displayName);
+  const lists = await graph(token, "GET", "/sites/" + siteId + "/lists?$select=id,displayName");
+  const existing = lists.value.find(function(l) { return l.displayName === displayName; });
   if (existing) {
-    console.log(`[SP] Lista existente: "${displayName}" (${existing.id})`);
+    console.log("[SP] Lista existente: \"" + displayName + "\" (" + existing.id + ")");
     return existing.id;
   }
-  // Crear nueva
-  const created = await graph(token, "POST", `/sites/${siteId}/lists`, {
-    displayName,
+  const created = await graph(token, "POST", "/sites/" + siteId + "/lists", {
+    displayName: displayName,
     list: { template: "genericList" },
   });
-  console.log(`[SP] Lista creada: "${displayName}" (${created.id})`);
+  console.log("[SP] Lista creada: \"" + displayName + "\" (" + created.id + ")");
   return created.id;
 }
 
 async function ensureColumns(token, siteId, listId, columns) {
-  // Obtener columnas existentes
-  const existing = await graph(token, "GET", `/sites/${siteId}/lists/${listId}/columns?$select=name`);
-  const existingNames = new Set(existing.value.map(c => c.name));
+  const existing = await graph(token, "GET", "/sites/" + siteId + "/lists/" + listId + "/columns?$select=name");
+  const existingNames = new Set(existing.value.map(function(c) { return c.name; }));
 
   for (const col of columns) {
     if (existingNames.has(col.name)) continue;
@@ -223,32 +209,32 @@ async function ensureColumns(token, siteId, listId, columns) {
       name:        col.name,
       displayName: col.display,
     };
-    if (col.type === "number")   colDef.number   = { decimalPlaces: "two" };
-    else if (col.type === "boolean") colDef.boolean = {};
-    else colDef.text = { allowMultipleLines: false, maxLength: 500 };
-
+    if (col.type === "number") {
+      colDef.number = { decimalPlaces: "two" };
+    } else {
+      colDef.text = { allowMultipleLines: false, maxLength: 500 };
+    }
     try {
-      await graph(token, "POST", `/sites/${siteId}/lists/${listId}/columns`, colDef);
+      await graph(token, "POST", "/sites/" + siteId + "/lists/" + listId + "/columns", colDef);
     } catch (e) {
-      console.warn(`[SP] Columna "${col.name}" ya existe o error: ${e.message}`);
+      console.warn("[SP] Columna \"" + col.name + "\" ya existe o error: " + e.message);
     }
   }
 }
 
 async function clearAllItems(token, siteId, listId) {
-  let nextLink = `/sites/${siteId}/lists/${listId}/items?$select=id&$top=500`;
+  let nextLink = "/sites/" + siteId + "/lists/" + listId + "/items?$select=id&$top=500";
   let total = 0;
   while (nextLink) {
     const data = await graph(token, "GET", nextLink);
     const items = data.value;
     if (!items.length) break;
-    // Borrar de a 5 en paralelo para no saturar el API
     for (let i = 0; i < items.length; i += 5) {
       const batch = items.slice(i, i + 5);
       await Promise.all(
-        batch.map(item =>
-          graph(token, "DELETE", `/sites/${siteId}/lists/${listId}/items/${item.id}`)
-        )
+        batch.map(function(item) {
+          return graph(token, "DELETE", "/sites/" + siteId + "/lists/" + listId + "/items/" + item.id);
+        })
       );
     }
     total += items.length;
@@ -256,35 +242,69 @@ async function clearAllItems(token, siteId, listId) {
       ? data["@odata.nextLink"].replace("https://graph.microsoft.com/v1.0", "")
       : null;
   }
-  console.log(`[SP] Eliminados ${total} ítems anteriores`);
+  console.log("[SP] Eliminados " + total + " items anteriores");
 }
 
 async function insertItems(token, siteId, listId, rows, titleField) {
   let inserted = 0;
   for (const row of rows) {
     const fields = {};
-    // Title es el campo requerido de SharePoint
-    fields.Title = String(row[titleField] ?? row.id ?? "Sin título").substring(0, 255);
-    // Resto de campos
-    for (const [key, val] of Object.entries(row)) {
+    fields.Title = String(row[titleField] || row.id || "Sin titulo").substring(0, 255);
+    for (const key of Object.keys(row)) {
       if (key === titleField) continue;
+      const val = row[key];
       if (val === null || val === undefined) continue;
       fields[key] = String(val).substring(0, 500);
     }
     try {
-      await graph(token, "POST", `/sites/${siteId}/lists/${listId}/items`, { fields });
+      await graph(token, "POST", "/sites/" + siteId + "/lists/" + listId + "/items", { fields: fields });
       inserted++;
     } catch (e) {
-      console.warn(`[SP] Error insertando ítem: ${e.message}`);
+      console.warn("[SP] Error insertando item: " + e.message);
     }
   }
-  console.log(`[SP] Insertados ${inserted} ítems`);
+  console.log("[SP] Insertados " + inserted + " items");
 }
 
 // ── Lógica principal ─────────────────────────────────────────
 
 async function syncTable(token, siteId, tableDef) {
-  console.log(`\n━━━ Sincronizando: ${tableDef.listName} ━━━`);
+  console.log("\n--- Sincronizando: " + tableDef.listName + " ---");
 
-  // 1. Obtener datos de Supabase
-  const { 
+  const result = await supabase
+    .from(tableDef.tableName)
+    .select(tableDef.select)
+    .order("created_at", { ascending: false });
+
+  if (result.error) throw new Error("Supabase error en " + tableDef.listName + ": " + result.error.message);
+  const rows = result.data.map(tableDef.flatten);
+  console.log("[SB] " + rows.length + " filas obtenidas de Supabase");
+
+  const listId = await getOrCreateList(token, siteId, tableDef.listName);
+  await ensureColumns(token, siteId, listId, tableDef.columns);
+  await clearAllItems(token, siteId, listId);
+  await insertItems(token, siteId, listId, rows, tableDef.titleField);
+}
+
+async function main() {
+  const start = new Date();
+  console.log("\nJPintuexpress Sync - " + start.toISOString());
+  console.log("--------------------------------------------------");
+
+  try {
+    const token  = await getToken();
+    const siteId = await getSiteId(token);
+
+    for (const table of TABLES) {
+      await syncTable(token, siteId, table);
+    }
+
+    const elapsed = ((Date.now() - start.getTime()) / 1000).toFixed(1);
+    console.log("\nSincronizacion completa en " + elapsed + "s");
+  } catch (err) {
+    console.error("\nError en sincronizacion: " + err.message);
+    process.exit(1);
+  }
+}
+
+main();
